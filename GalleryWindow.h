@@ -34,12 +34,14 @@ private:
 	const int columnsNum = 4;
 	int nextCellRow;
 	int nextCellCol;
+	bool networkUnaccessible;
 
 private slots:
 	void loadClicked();
 	void mediaDataLoaded( QVector<ImageInfo> data);
 	void loadMoreClicked();
-	void thumbnailDoubleClicked();
+	void showStandardResolution();
+	void networkStateChanged(QNetworkAccessManager::NetworkAccessibility accessible);
 };
 
 #endif // GALLERYWINDOW_H

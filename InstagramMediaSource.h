@@ -28,12 +28,14 @@ public:
 
 signals:
 	void imagesDataLoaded(QVector<ImageInfo>);
+	void loadingFailed();
 
 private:
 	QString userName;
 	QString mainUrl;
 	QString lastID;
 	QNetworkAccessManager * manager;
+	QVector<ImageInfo> buffered;
 
 	bool metaReceivingError;
 	bool canFetchMore;

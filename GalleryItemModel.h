@@ -34,7 +34,7 @@ private:
 	static QNetworkAccessManager * manager ;
 
 signals:
-	void thumbnailLoaded();
+	void thumbnailLoaded( bool success );
 	void standardLoaded();
 
 private slots:

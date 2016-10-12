@@ -3,6 +3,7 @@
 #include <QNetworkAccessManager>
 #include <QGridLayout>
 #include <QMovie>
+#include <QMessageBox>
 #include <assert.h>
 #include "PhotoViewerDialog.h"
 #include "Thumbnail.h"
@@ -15,6 +16,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) :
 	ui->setupUi(this);
 	ui->usernameLineEdit->setText("gwyn_nightfall");
 	networkManager = new QNetworkAccessManager(this);
+	connect(networkManager, SIGNAL(networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility)), this, SLOT(networkStateChanged(QNetworkAccessManager::NetworkAccessibility)) );
 	source = new InstagramMediaSource( networkManager);
 	connect( ui->loadButton, SIGNAL(clicked()), this, SLOT(loadClicked()) );
 	connect( source, SIGNAL(imagesDataLoaded(QVector<ImageInfo>)), this, SLOT(mediaDataLoaded(QVector<ImageInfo>)) );
@@ -55,7 +57,7 @@ GalleryWindow::~GalleryWindow()
 void GalleryWindow::loadClicked()
 {
 	QString username = ui->usernameLineEdit->text();
-	if( ( !username.isEmpty() ) && ( username.compare( source->username() ) != 0 ) )
+	if( !username.isEmpty() )
 	{
 		source->setUsername(username);
 		for(int i = 0 ; i < thumbnails.size(); i++) thumbnails[i]->hide();
@@ -81,7 +83,7 @@ void GalleryWindow::mediaDataLoaded(QVector<ImageInfo> data)
 		{
 			thumb = new Thumbnail();
 			thumbsLayout->addWidget( thumb, nextCellRow , nextCellCol );
-			connect( thumb, SIGNAL(doubleClicked()), this, SLOT(thumbnailDoubleClicked()) );
+			connect( thumb, SIGNAL(doubleClicked()), this, SLOT(showStandardResolution()) );
 			thumbnails.append(thumb);
 		}
 
@@ -124,7 +126,7 @@ void GalleryWindow::loadMoreClicked()
 
 }
 
-void GalleryWindow::thumbnailDoubleClicked()
+void GalleryWindow::showStandardResolution()
 {
 	Thumbnail * thumb = qobject_cast<Thumbnail*>(sender());
 	assert( thumb != 0 );
@@ -138,4 +140,19 @@ void GalleryWindow::thumbnailDoubleClicked()
 	});
 	model->loadStandard();
 	photoViewer->show();
+}
+
+void GalleryWindow::networkStateChanged(QNetworkAccessManager::NetworkAccessibility accessible)
+{
+	switch( accessible )
+	{
+	case QNetworkAccessManager::UnknownAccessibility:
+	case QNetworkAccessManager::NotAccessible:
+		QMessageBox::warning( this, "Network error", "Network is unaccessible." );
+		ui->loadMoreButton->setEnabled( false );
+		break;
+
+	case QNetworkAccessManager::Accessible:
+		ui->loadMoreButton->setEnabled( true );
+	}
 }

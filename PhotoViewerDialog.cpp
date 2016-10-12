@@ -15,7 +15,7 @@ PhotoViewerDialog::PhotoViewerDialog(QWidget *parent) :
 	this->grabGesture( Qt::PanGesture );
 	hOffset = vOffset = 0.0;
 	zoomed = false;
-	maxScale = 5.0;
+	maxScale = 3.0;
 	mousePressed = false;
 }
 
@@ -51,24 +51,16 @@ void PhotoViewerDialog::setPhoto(QPixmap photo)
 
 void PhotoViewerDialog::handleGestures(QGestureEvent *event)
 {
-	qDebug() << "Handle gestures call";
 	if( QGesture * pan = event->gesture( Qt::PanGesture )) handlePan( static_cast<QPanGesture*>(pan) );
 }
 
 void PhotoViewerDialog::handlePan(QPanGesture *pan)
 {
-	qDebug() << "Pan gesture recognized";
 	auto delta = pan->delta();
 	hOffset += delta.x();
 	vOffset += delta.y();
 	update();
 }
-
-void PhotoViewerDialog::handlePinch(QPinchGesture *pinch)
-{
-
-}
-
 
 bool PhotoViewerDialog::event(QEvent * event)
 {
@@ -100,11 +92,20 @@ void PhotoViewerDialog::paintEvent(QPaintEvent *)
 	const qreal ww = this->width();
 	const qreal wh = this->height();
 
-	painter.translate( ww/2, wh/2 );
-	if( zoomed ) painter.translate(hOffset, vOffset);
-	painter.scale(currentScale, currentScale);
-	painter.translate(-pw/2, -ph/2);
-	painter.drawPixmap(0, 0, currentPixmap);
+	if( !currentPixmap.isNull() )
+	{
+		painter.translate( ww/2, wh/2 );
+		if( zoomed ) painter.translate(hOffset, vOffset);
+		painter.scale(currentScale, currentScale);
+		painter.translate(-pw/2, -ph/2);
+		painter.drawPixmap(0, 0, currentPixmap);
+	}
+	else
+	{
+		QPoint pos = QPoint( ww/2 - 50, wh/2 );
+		painter.drawText( pos, "Loading..." );
+	}
+
 }
 
 

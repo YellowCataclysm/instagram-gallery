@@ -24,7 +24,7 @@ signals:
 	void doubleClicked();
 
 private slots:
-	void thumbnailLoaded();
+	void thumbnailLoaded(bool success);
 
 	// QWidget interface
 protected:

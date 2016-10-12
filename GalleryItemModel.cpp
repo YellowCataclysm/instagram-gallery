@@ -28,7 +28,7 @@ void GalleryItemModel::loadThumbnail()
 {
 	if( !thumbnail.pixmap.isNull() )
 	{
-		emit thumbnailLoaded();
+		emit thumbnailLoaded(true);
 		return;
 	}
 
@@ -70,7 +70,11 @@ void GalleryItemModel::thumbnailLoadingFinished()
 		QCoreApplication::exit(EXIT_FAILURE);
 	}
 
-	if( reply->error() != QNetworkReply::NoError ) return;
+	if( reply->error() != QNetworkReply::NoError )
+	{
+		emit thumbnailLoaded(false);
+		return;
+	}
 
 	QByteArray data = reply->readAll();
 	if( data.isEmpty() )
@@ -85,7 +89,7 @@ void GalleryItemModel::thumbnailLoadingFinished()
 		return;
 	}
 	reply->deleteLater();
-	emit thumbnailLoaded();
+	emit thumbnailLoaded(true);
 }
 
 void GalleryItemModel::standardLoadingFinished()
@@ -124,6 +128,7 @@ void GalleryItemModel::loadingImageError(QNetworkReply::NetworkError error)
 		qDebug() << "GalleryItemModel::loadingImageError() - Critical::Cannot cast sender() to a QNetworkReply*. Check signal sender at slot connect() call.";
 		QCoreApplication::exit(EXIT_FAILURE);
 	}
+
 	if( error < QNetworkReply::BackgroundRequestNotAllowedError)
 	{
 		QMessageBox::critical( nullptr, QString("Connection error"), QString("Cannot connect to target host.\nDetails: ") + reply->errorString() + "\nCheck your internet connection."  );

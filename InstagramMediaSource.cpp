@@ -157,17 +157,20 @@ void InstagramMediaSource::raiseParserInvalidDataError(QString details)
 
 void InstagramMediaSource::metaReceived()
 {
-	if(metaReceivingError)
-	{
-		metaReceivingError = false;
-		return;
-	}
 	QNetworkReply * reply = qobject_cast<QNetworkReply *>(sender());
 	if( reply == 0 )
 	{
 		qDebug() << "InstagramMediaSource::metaRequestError() - Critical::Cannot cast sender() to a QNetworkReply*. Check signal sender at slot connect() call.";
 		QCoreApplication::exit(EXIT_FAILURE);
 	}
+
+	if(metaReceivingError)
+	{
+		metaReceivingError = false;
+		reply->deleteLater();
+		return;
+	}
+
 	QByteArray data = reply->readAll();
 	if( data.isEmpty() )
 	{
@@ -179,7 +182,15 @@ void InstagramMediaSource::metaReceived()
 	auto images_data = parseMeta( data );
 	reply->deleteLater();
 
-	if( !images_data.empty() ) emit imagesDataLoaded( images_data );
+	if( (buffered.size() + images_data.size()) < 16 && canFetchMore )
+	{
+		buffered += images_data;
+		loadMeta();
+		return;
+	}
+
+	emit imagesDataLoaded( buffered + images_data );
+	buffered.clear();
 }
 
 
@@ -198,13 +209,12 @@ void InstagramMediaSource::metaRequestError(QNetworkReply::NetworkError error)
 	if( error < QNetworkReply::BackgroundRequestNotAllowedError)
 	{
 		QMessageBox::critical( nullptr, QString("Connection error"), QString("Cannot connect to target host.\nDetails: ") + reply->errorString() + "\nCheck your internet connection."  );
-		return;
 	}
 	else
 	{
 		QMessageBox::critical( nullptr, QString("Server error"), QString("Data acquiring error.\nDetails: ") + reply->errorString()  );
-		return;
 	}
+	emit loadingFailed();
 }
 
 void InstagramMediaSource::metaSslErrorHandler(QList<QSslError> errors)
@@ -213,5 +223,6 @@ void InstagramMediaSource::metaSslErrorHandler(QList<QSslError> errors)
 	for( int i = 0 ; i < errors.size() ; i++ ) errorText += errors.at(i).errorString() + "\n";
 	QMessageBox::critical( nullptr, QString("SSL error"), errorText );
 	metaReceivingError = false;
+	emit loadingFailed();
 }
 
