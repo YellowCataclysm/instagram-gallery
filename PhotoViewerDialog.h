@@ -21,9 +21,14 @@ public slots:
 
 private:
 	Ui::PhotoViewerDialog *ui;
+	QPixmap currentPixmap;
+	qreal currentScale;
+	qreal maxScale;
+	qreal hOffset;
+	qreal vOffset;
 	bool zoomed;
-	QSize originalImageSize;
-	float zoomFactor;
+	bool mousePressed;
+	QPoint mousePrevPos;
 
 	void handleGestures( QGestureEvent * event );
 	void handlePan( QPanGesture * pan );
@@ -33,6 +38,16 @@ private:
 protected:
 	bool event(QEvent *event) override;
 	void mouseDoubleClickEvent(QMouseEvent *event);
+
+	// QWidget interface
+protected:
+	void paintEvent(QPaintEvent *);
+
+	// QWidget interface
+protected:
+	void mousePressEvent(QMouseEvent *);
+	void mouseReleaseEvent(QMouseEvent *);
+	void mouseMoveEvent(QMouseEvent *);
 };
 
 #endif // PHOTOVIEWERDIALOG_H

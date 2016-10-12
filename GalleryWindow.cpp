@@ -34,6 +34,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) :
 	photoViewer = new PhotoViewerDialog();
 	photoViewer->hide();
 	photoViewer->setModal(true);
+	grabGesture( Qt::PanGesture );
 }
 
 GalleryWindow::~GalleryWindow()

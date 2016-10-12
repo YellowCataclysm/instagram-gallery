@@ -3,6 +3,7 @@
 
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
+#include <QPainter>
 #include <QDebug>
 
 PhotoViewerDialog::PhotoViewerDialog(QWidget *parent) :
@@ -10,9 +11,12 @@ PhotoViewerDialog::PhotoViewerDialog(QWidget *parent) :
 	ui(new Ui::PhotoViewerDialog)
 {
 	ui->setupUi(this);
-	zoomed = false;
-	zoomFactor = 2.0f;
+	currentScale = 1.0;
 	this->grabGesture( Qt::PanGesture );
+	hOffset = vOffset = 0.0;
+	zoomed = false;
+	maxScale = 5.0;
+	mousePressed = false;
 }
 
 PhotoViewerDialog::~PhotoViewerDialog()
@@ -22,14 +26,15 @@ PhotoViewerDialog::~PhotoViewerDialog()
 
 void PhotoViewerDialog::setPhoto(QPixmap photo)
 {
-	ui->photoLabel->setPixmap( photo );
+	currentPixmap = photo;
+	currentScale = 1.0f;
+	zoomed = false;
+	hOffset = vOffset = 0.0;
+	mousePressed = false;
 	if( !photo.isNull() )
 	{
-		originalImageSize = photo.size();
-		//ui->scrollAreaWidgetContents->setMinimumSize( originalImageSize );
-
 		QGraphicsOpacityEffect * effect = new QGraphicsOpacityEffect(this);
-		ui->photoLabel->setGraphicsEffect(effect);
+		this->setGraphicsEffect(effect);
 		QPropertyAnimation* a = new QPropertyAnimation( effect, "opacity", this );
 
 		// Disable effect to prevent rendering bugs after animation finished
@@ -42,19 +47,21 @@ void PhotoViewerDialog::setPhoto(QPixmap photo)
 		a->setEndValue(1);
 		a->start(QAbstractAnimation::DeleteWhenStopped);
 	}
-	zoomed = false;
 }
 
 void PhotoViewerDialog::handleGestures(QGestureEvent *event)
 {
+	qDebug() << "Handle gestures call";
 	if( QGesture * pan = event->gesture( Qt::PanGesture )) handlePan( static_cast<QPanGesture*>(pan) );
 }
 
 void PhotoViewerDialog::handlePan(QPanGesture *pan)
 {
 	qDebug() << "Pan gesture recognized";
-	auto delta = pan->delta().toPoint();
-	ui->scrollArea->scroll( delta.x(), delta.y() );
+	auto delta = pan->delta();
+	hOffset += delta.x();
+	vOffset += delta.y();
+	update();
 }
 
 void PhotoViewerDialog::handlePinch(QPinchGesture *pinch)
@@ -71,13 +78,63 @@ bool PhotoViewerDialog::event(QEvent * event)
 
 void PhotoViewerDialog::mouseDoubleClickEvent(QMouseEvent * event)
 {
-	QPoint inAreaPos = ui->scrollAreaWidgetContents->mapFromGlobal(event->globalPos());
-	if( !ui->scrollAreaWidgetContents->visibleRegion().contains( inAreaPos ) ) return;
-	QSize target = zoomed ? originalImageSize : originalImageSize * zoomFactor;
-	ui->photoLabel->setPixmap( ui->photoLabel->pixmap()->scaled( target, Qt::AspectRatioMode::KeepAspectRatio ) );
-	if( !zoomed )
-	{
-
-	}
+	currentScale = zoomed ? 1.0f : maxScale;
 	zoomed = !zoomed;
+	if( zoomed )
+	{
+		const qreal wCenterX = this->width() / 2.0 ;
+		const qreal wCenterY = this->height() / 2.0;
+
+		hOffset = (wCenterX - event->pos().x()) * maxScale;
+		vOffset = (wCenterY - event->pos().y()) * maxScale;
+	}
+	update();
+}
+
+
+void PhotoViewerDialog::paintEvent(QPaintEvent *)
+{
+	QPainter painter(this);
+	const qreal pw = currentPixmap.width();
+	const qreal ph = currentPixmap.height();
+	const qreal ww = this->width();
+	const qreal wh = this->height();
+
+	painter.translate( ww/2, wh/2 );
+	if( zoomed ) painter.translate(hOffset, vOffset);
+	painter.scale(currentScale, currentScale);
+	painter.translate(-pw/2, -ph/2);
+	painter.drawPixmap(0, 0, currentPixmap);
+}
+
+
+void PhotoViewerDialog::mousePressEvent(QMouseEvent * ev)
+{
+	if( ev->button() == Qt::LeftButton )
+	{
+		mousePressed = true;
+		mousePrevPos = ev->pos();
+	}
+}
+
+void PhotoViewerDialog::mouseReleaseEvent(QMouseEvent *ev)
+{
+	if( ev->button() == Qt::LeftButton ) mousePressed = false;
+	else if( ev->button() == Qt::RightButton )
+	{
+		hOffset = vOffset = 0;
+		update();
+	}
+}
+
+void PhotoViewerDialog::mouseMoveEvent(QMouseEvent * ev)
+{
+	if( mousePressed )
+	{
+		auto delta = QPoint(ev->x() - mousePrevPos.x(),ev->y() - mousePrevPos.y());
+		hOffset += delta.x();
+		vOffset += delta.y();
+		mousePrevPos = ev->pos();
+		update();
+	}
 }
