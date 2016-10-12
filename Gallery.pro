@@ -13,6 +13,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = Gallery
 TEMPLATE = app
 
+QMAKE_RPATHDIR += ./libs
+
 
 SOURCES += main.cpp\
         GalleryWindow.cpp \
