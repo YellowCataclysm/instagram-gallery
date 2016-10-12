@@ -4,7 +4,12 @@
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
 #include <QPainter>
+#include <cmath>
 #include <QDebug>
+
+template <typename T> int sign(T val) {
+	return (T(0) < val) - (val < T(0));
+}
 
 PhotoViewerDialog::PhotoViewerDialog(QWidget *parent) :
 	QDialog(parent),
@@ -59,7 +64,19 @@ void PhotoViewerDialog::handlePan(QPanGesture *pan)
 	auto delta = pan->delta();
 	hOffset += delta.x();
 	vOffset += delta.y();
+	clampOffset();
 	update();
+}
+
+void PhotoViewerDialog::clampOffset()
+{
+	const qreal pw = currentPixmap.width() * currentScale;
+	const qreal ph = currentPixmap.height() * currentScale;
+	const qreal maxHOffest = pw / 2;
+	const qreal maxVOffest = ph / 2;
+
+	if( fabs(hOffset) > maxHOffest ) hOffset = maxHOffest * sign<qreal>( hOffset );
+	if( fabs(vOffset) > maxVOffest ) vOffset = maxVOffest * sign<qreal>( vOffset );
 }
 
 bool PhotoViewerDialog::event(QEvent * event)
@@ -79,6 +96,7 @@ void PhotoViewerDialog::mouseDoubleClickEvent(QMouseEvent * event)
 
 		hOffset = (wCenterX - event->pos().x()) * maxScale;
 		vOffset = (wCenterY - event->pos().y()) * maxScale;
+		clampOffset();
 	}
 	update();
 }
@@ -136,6 +154,7 @@ void PhotoViewerDialog::mouseMoveEvent(QMouseEvent * ev)
 		hOffset += delta.x();
 		vOffset += delta.y();
 		mousePrevPos = ev->pos();
+		clampOffset();
 		update();
 	}
 }

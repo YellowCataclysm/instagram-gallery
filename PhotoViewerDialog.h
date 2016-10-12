@@ -32,7 +32,7 @@ private:
 
 	void handleGestures( QGestureEvent * event );
 	void handlePan( QPanGesture * pan );
-	void handlePinch( QPinchGesture * pinch );
+	void clampOffset();
 
 	// QWidget interface
 protected:
