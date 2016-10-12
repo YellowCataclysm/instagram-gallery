@@ -1,0 +1,22 @@
+Instagram Gallery
+--------------------------
+
+Tool to to view instagram public profile photos
+
+Qt > 5.4.0
+Ubuntu 14.04
+
+-------------------------
+Usage:
+
+Gallery window:
+1. Type instagram progile name into
+2. Click "Load"
+3. To load next publications, click "Load more" at the bottom of view
+4. DoubleClick on thumbnail to show in full resolution
+
+Details window:
+1. DoubleClick to zoom in/out
+2. Press left mouse button to pan image while zoomed
+3. Press right mouse button to center view
+
