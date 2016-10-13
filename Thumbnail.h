@@ -13,7 +13,7 @@ public:
 	Thumbnail( QWidget * parent = 0 );
 	~Thumbnail();
 
-	void setModel( GalleryItemModel * model );
+    GalleryItemModel *setModel( GalleryItemModel * model );
 	GalleryItemModel * getModel() { return model; }
 
 private:

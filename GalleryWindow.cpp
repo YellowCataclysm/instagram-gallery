@@ -73,12 +73,8 @@ void GalleryWindow::mediaDataLoaded(QVector<ImageInfo> data)
 	{
 		int currentCellIndex = nextCellRow * columnsNum + nextCellCol;
 		bool canReuse = thumbnails.size() >  currentCellIndex;
-		Thumbnail * thumb = nullptr;
-		if( canReuse )
-		{
-			thumb = thumbnails[currentCellIndex];
-			delete thumb->getModel();
-		}
+        Thumbnail * thumb = nullptr;
+        if( canReuse ) thumb = thumbnails[currentCellIndex];
 		else
 		{
 			thumb = new Thumbnail();
@@ -89,9 +85,10 @@ void GalleryWindow::mediaDataLoaded(QVector<ImageInfo> data)
 
 		auto item = data[i];
 		GalleryItemModel * itemModel = new GalleryItemModel( item.thumbnail_url, item.standard_url);
-		models.append( itemModel );
+        //models.append( itemModel );
 
-		thumb->setModel(itemModel);
+        auto prevModel = thumb->setModel(itemModel);
+        delete prevModel;
 		thumb->show();
 
 		nextCellCol++;

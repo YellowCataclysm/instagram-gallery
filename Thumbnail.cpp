@@ -16,17 +16,19 @@ Thumbnail::~Thumbnail()
 
 }
 
-void Thumbnail::setModel(GalleryItemModel *model)
+GalleryItemModel * Thumbnail::setModel(GalleryItemModel *model)
 {
-	if( this->model != nullptr ) disconnect(this->model, SIGNAL(thumbnailLoaded()), this, SLOT(thumbnailLoaded()));
+    if( this->model != nullptr ) disconnect(this->model, SIGNAL(thumbnailLoaded(bool)), this, SLOT(thumbnailLoaded(bool)));
 	if( model != nullptr )
 	{
 		setPixmap(QPixmap());
 		setText("Loading...");
 		connect( model, SIGNAL(thumbnailLoaded(bool)), this, SLOT(thumbnailLoaded(bool)) );
+        model->loadThumbnail();
 	}
-	model->loadThumbnail();
+    auto prevModel = this->model;
 	this->model = model;
+    return prevModel;
 }
 
 void Thumbnail::thumbnailLoaded( bool success )
